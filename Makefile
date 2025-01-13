@@ -19,13 +19,11 @@ all: nuke build test
 checklicense:
 	go get github.com/awalterschulze/checklicense
 	checklicense . \
-	bnf \
 	doc.go \
 	tools/tools.go \
 	.svg \
 	.txt \
-	COPIED_FROM_GO \
-	parser/yaml/issues.md
+	COPIED_FROM_GO
 
 test:
 	go test ./...
