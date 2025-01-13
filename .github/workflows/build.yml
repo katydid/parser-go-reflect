@@ -9,18 +9,18 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v4
       with:
-        path: gopath/github.com/katydid/parser-go
+        path: gopath/github.com/katydid/parser-go-reflect
     - name: Setup Go
       uses: actions/setup-go@v3
       with:
         go-version: 1.23
     - name: Fetch dependencies
       run: |
-        cd gopath/github.com/katydid/parser-go
+        cd gopath/github.com/katydid/parser-go-reflect
         go mod download -x
     - name: Install tools
       run: |
-        cd gopath/github.com/katydid/parser-go
+        cd gopath/github.com/katydid/parser-go-reflect
         go install -x github.com/awalterschulze/checklicense
     - name: env
       run: env && go env && pwd
@@ -28,17 +28,17 @@ jobs:
       run: tree
     - name: Build
       run: |
-        cd gopath/github.com/katydid/parser-go
+        cd gopath/github.com/katydid/parser-go-reflect
         make build
     - name: Test
       run: |
-        cd gopath/github.com/katydid/parser-go
+        cd gopath/github.com/katydid/parser-go-reflect
         make test
     - name: Checklicencse
       run: |
-        cd gopath/github.com/katydid/parser-go
+        cd gopath/github.com/katydid/parser-go-reflect
         make checklicense
     - name: Diff
       run: |
-        cd gopath/github.com/katydid/parser-go
+        cd gopath/github.com/katydid/parser-go-reflect
         make diff
