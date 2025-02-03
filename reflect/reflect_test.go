@@ -24,7 +24,10 @@ import (
 func TestDebug(t *testing.T) {
 	p := NewReflectParser()
 	p.Init(reflect.ValueOf(debug.Input))
-	m := debug.Walk(p)
+	m, err := debug.Parse(p)
+	if err != nil {
+		t.Fatal(err)
+	}
 	if !m.Equal(debug.Output) {
 		t.Fatalf("expected %s but got %s", debug.Output, m)
 	}
@@ -35,7 +38,10 @@ func TestRandomDebug(t *testing.T) {
 	for i := 0; i < 10; i++ {
 		p.Init(reflect.ValueOf(debug.Input))
 		//l := debug.NewLogger(p, debug.NewLineLogger())
-		debug.RandomWalk(p, debug.NewRand(), 10, 3)
+		err := debug.RandomWalk(p, debug.NewRand(), 10, 3)
+		if err != nil {
+			t.Fatal(err)
+		}
 		//t.Logf("original %v vs random %v", debug.Output, m)
 	}
 }
