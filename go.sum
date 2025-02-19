@@ -1,4 +1,4 @@
 github.com/awalterschulze/checklicense v1.0.0 h1:SiRilt26Q+2M238VbXw+e5826mxPypvsj/xgglHDHW8=
 github.com/awalterschulze/checklicense v1.0.0/go.mod h1:oUHvoD4crryzAwDwtdQqCnaZRznAvZE64edH9ukb1K4=
-github.com/katydid/parser-go v0.7.0 h1:3+z3hWII2oalI8Xpa/+T54q5Tgz6HIX5BQNkdn5Lz9c=
-github.com/katydid/parser-go v0.7.0/go.mod h1:1BwRfDlyRgDlAaURZ4FXi7IzHqWKTsrCdsstLsFeQho=
+github.com/katydid/parser-go v0.7.2 h1:nXkqDoTP4uU0XMLcYmqwsxfrm1ciu2GFdk1T2g0UNcs=
+github.com/katydid/parser-go v0.7.2/go.mod h1:3Oe5QRVSv2L8x7KlZooujIqsZRQXk3htVbzRvXeptzA=
