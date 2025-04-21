@@ -18,10 +18,6 @@ jobs:
       run: |
         cd gopath/github.com/katydid/parser-go-reflect
         go mod download -x
-    - name: Install tools
-      run: |
-        cd gopath/github.com/katydid/parser-go-reflect
-        go install -x github.com/awalterschulze/checklicense
     - name: env
       run: env && go env && pwd
     - name: tree
@@ -35,9 +31,10 @@ jobs:
         cd gopath/github.com/katydid/parser-go-reflect
         make test
     - name: Checklicencse
-      run: |
-        cd gopath/github.com/katydid/parser-go-reflect
-        make checklicense
+      uses: awalterschulze/checklicense@v1.0.6
+      with:
+        path: gopath/github.com/katydid/parser-go-reflect
+        ignores: doc.go .svg .txt
     - name: Diff
       run: |
         cd gopath/github.com/katydid/parser-go-reflect
