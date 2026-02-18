@@ -222,3 +222,41 @@ func TestWithRandomMapTestStruct(t *testing.T) {
 		testWithRandomMapTestStruct(t, r)
 	}
 }
+
+func TestMapOfInterface(t *testing.T) {
+	m := map[string]interface{}{"MenuPaperclip": []interface{}{"a", "b", "c"}}
+	p := NewReflectParser()
+	p.Init(reflect.ValueOf(m))
+	if err := p.Next(); err != nil {
+		t.Fatal(err)
+	}
+	if v, err := p.String(); err != nil || v != "MenuPaperclip" {
+		t.Fatalf("expected field MenuPaperclip, but got %s, %s", v, err)
+	}
+	p.Down()
+	for i := 0; i < len(m["MenuPaperclip"].([]interface{})); i++ {
+		if err := p.Next(); err != nil {
+			t.Fatal(err)
+		}
+		index, err := p.Int()
+		if err != nil {
+			t.Fatal(err)
+		}
+		if index != int64(i) {
+			t.Fatalf("expected index %d, but got %d", i, index)
+		}
+		p.Down()
+		if err := p.Next(); err != nil {
+			t.Fatal(err)
+		}
+		value := m["MenuPaperclip"].([]interface{})[index].(string)
+		if v, err := p.String(); err != nil || v != value {
+			t.Fatalf("expected value %s, but got %s, %s", value, v, err)
+		}
+		p.Up()
+	}
+	p.Up()
+	if err := p.Next(); err != io.EOF {
+		t.Fatal(err)
+	}
+}

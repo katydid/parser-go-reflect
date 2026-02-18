@@ -41,6 +41,9 @@ type reflectParser struct {
 func deref(v reflect.Value) reflect.Value {
 	if v.Kind() == reflect.Ptr {
 		return v.Elem()
+	} else if v.Kind() == reflect.Interface {
+		// get underlying type of interface
+		return v.Elem()
 	}
 	return v
 }
