@@ -17,6 +17,7 @@
 all: nuke build test
 
 test:
+	go clean -testcache
 	go test ./...
 
 build:

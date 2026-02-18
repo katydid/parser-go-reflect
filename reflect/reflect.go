@@ -30,6 +30,7 @@ type state struct {
 	maxField int
 	isLeaf   bool
 	isArray  bool
+	mapIter  *reflect.MapIter
 }
 
 type reflectParser struct {
@@ -51,12 +52,17 @@ func newState(val reflect.Value) state {
 			parent:   value,
 			maxField: value.NumField(),
 		}
-	}
-	if isSlice(value) {
+	} else if isSlice(value) {
 		return state{
 			parent:   value,
 			maxField: value.Len(),
 			isArray:  true,
+		}
+	} else if value.Kind() == reflect.Map {
+		return state{
+			parent:   value,
+			maxField: value.Len(),
+			mapIter:  value.MapRange(),
 		}
 	}
 	return state{
@@ -91,11 +97,23 @@ func (s *reflectParser) Next() error {
 	if s.field >= s.maxField {
 		return io.EOF
 	}
-	if !s.isLeaf && !s.isArray {
+	if s.mapIter != nil {
+		s.mapIter.Next()
+	} else if !s.isLeaf && !s.isArray {
 		s.typ = s.parent.Type().Field(s.field)
 		s.value = s.parent.Field(s.field)
-		if s.value.Kind() == reflect.Ptr || s.value.Kind() == reflect.Slice {
+		if s.value.Kind() == reflect.Ptr {
 			if s.value.IsNil() {
+				s.field++
+				return s.Next()
+			}
+		} else if s.value.Kind() == reflect.Slice {
+			if s.value.IsNil() || s.value.Len() == 0 {
+				s.field++
+				return s.Next()
+			}
+		} else if s.value.Kind() == reflect.Map {
+			if s.value.IsNil() || s.value.Len() == 0 {
 				s.field++
 				return s.Next()
 			}
@@ -120,6 +138,12 @@ func (s *reflectParser) Double() (float64, error) {
 		case reflect.Float64, reflect.Float32:
 			return value.Float(), nil
 		}
+	} else if s.mapIter != nil {
+		value := s.mapIter.Key()
+		switch value.Kind() {
+		case reflect.Float64, reflect.Float32:
+			return value.Float(), nil
+		}
 	}
 	return 0, parser.ErrNotDouble
 }
@@ -130,6 +154,12 @@ func (s *reflectParser) Int() (int64, error) {
 	}
 	if s.isLeaf {
 		value := s.getValue()
+		switch value.Kind() {
+		case reflect.Int64, reflect.Int32:
+			return value.Int(), nil
+		}
+	} else if s.mapIter != nil {
+		value := s.mapIter.Key()
 		switch value.Kind() {
 		case reflect.Int64, reflect.Int32:
 			return value.Int(), nil
@@ -145,6 +175,12 @@ func (s *reflectParser) Uint() (uint64, error) {
 		case reflect.Uint64, reflect.Uint32:
 			return value.Uint(), nil
 		}
+	} else if s.mapIter != nil {
+		value := s.mapIter.Key()
+		switch value.Kind() {
+		case reflect.Uint64, reflect.Uint32:
+			return value.Uint(), nil
+		}
 	}
 	return 0, parser.ErrNotUint
 }
@@ -156,25 +192,45 @@ func (s *reflectParser) Bool() (bool, error) {
 		case reflect.Bool:
 			return value.Bool(), nil
 		}
+	} else if s.mapIter != nil {
+		value := s.mapIter.Key()
+		switch value.Kind() {
+		case reflect.Bool:
+			return value.Bool(), nil
+		}
 	}
 	return false, parser.ErrNotBool
 }
 
 func (s *reflectParser) String() (string, error) {
-	if !s.isLeaf {
+	if s.isLeaf {
+		value := s.getValue()
+		switch value.Kind() {
+		case reflect.String:
+			return value.String(), nil
+		}
+	} else if s.mapIter != nil {
+		value := s.mapIter.Key()
+		switch value.Kind() {
+		case reflect.String:
+			return value.String(), nil
+		}
+	} else {
 		return s.typ.Name, nil
 	}
-	value := s.getValue()
-	switch value.Kind() {
-	case reflect.String:
-		return value.String(), nil
-	}
+
 	return "", parser.ErrNotString
 }
 
 func (s *reflectParser) Bytes() ([]byte, error) {
 	if s.isLeaf {
 		value := s.getValue()
+		switch value.Kind() {
+		case reflect.Slice, reflect.Uint8, reflect.Int8:
+			return value.Bytes(), nil
+		}
+	} else if s.mapIter != nil {
+		value := s.mapIter.Key()
 		switch value.Kind() {
 		case reflect.Slice, reflect.Uint8, reflect.Int8:
 			return value.Bytes(), nil
@@ -193,6 +249,8 @@ func (s *reflectParser) Down() {
 	s.stack = append(s.stack, s.state)
 	if s.isArray {
 		s.state = newState(s.state.parent.Index(s.field - 1))
+	} else if s.mapIter != nil {
+		s.state = newState(s.mapIter.Value())
 	} else {
 		s.state = newState(s.state.value)
 	}
