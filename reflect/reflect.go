@@ -36,7 +36,8 @@ type state struct {
 type reflectParser struct {
 	options
 	state
-	stack []state
+	original reflect.Value
+	stack    []state
 }
 
 func deref(v reflect.Value) reflect.Value {
@@ -85,6 +86,7 @@ type ReflectParser interface {
 	parser.Interface
 	//Init initialises the parser with a value of reflected go structure.
 	Init(value reflect.Value) ReflectParser
+	Reset()
 }
 
 // NewReflectParser returns a new reflect parser.
@@ -94,7 +96,13 @@ func NewReflectParser(options ...Option) ReflectParser {
 
 func (s *reflectParser) Init(value reflect.Value) ReflectParser {
 	s.state = newState(value)
+	s.original = value
+	s.stack = s.stack[:0]
 	return s
+}
+
+func (s *reflectParser) Reset() {
+	s.Init(s.original)
 }
 
 func (s *reflectParser) Next() error {
