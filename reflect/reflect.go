@@ -34,6 +34,7 @@ type state struct {
 }
 
 type reflectParser struct {
+	options
 	state
 	stack []state
 }
@@ -87,8 +88,8 @@ type ReflectParser interface {
 }
 
 // NewReflectParser returns a new reflect parser.
-func NewReflectParser() ReflectParser {
-	return &reflectParser{stack: make([]state, 0, 10)}
+func NewReflectParser(options ...Option) ReflectParser {
+	return &reflectParser{options: newOptions(options...), stack: make([]state, 0, 10)}
 }
 
 func (s *reflectParser) Init(value reflect.Value) ReflectParser {
@@ -160,12 +161,22 @@ func (s *reflectParser) Int() (int64, error) {
 		switch value.Kind() {
 		case reflect.Int64, reflect.Int32:
 			return value.Int(), nil
+		case reflect.Float64:
+			if s.jsonNumber {
+				d := value.Float()
+				return int64(d), nil
+			}
 		}
 	} else if s.mapIter != nil {
 		value := s.mapIter.Key()
 		switch value.Kind() {
 		case reflect.Int64, reflect.Int32:
 			return value.Int(), nil
+		case reflect.Float64:
+			if s.jsonNumber {
+				d := value.Float()
+				return int64(d), nil
+			}
 		}
 	}
 	return 0, parser.ErrNotInt
@@ -177,12 +188,22 @@ func (s *reflectParser) Uint() (uint64, error) {
 		switch value.Kind() {
 		case reflect.Uint64, reflect.Uint32:
 			return value.Uint(), nil
+		case reflect.Float64:
+			if s.jsonNumber {
+				d := value.Float()
+				return uint64(d), nil
+			}
 		}
 	} else if s.mapIter != nil {
 		value := s.mapIter.Key()
 		switch value.Kind() {
 		case reflect.Uint64, reflect.Uint32:
 			return value.Uint(), nil
+		case reflect.Float64:
+			if s.jsonNumber {
+				d := value.Float()
+				return uint64(d), nil
+			}
 		}
 	}
 	return 0, parser.ErrNotUint

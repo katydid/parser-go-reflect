@@ -365,5 +365,39 @@ func TestListOfStructs(t *testing.T) {
 	if len(missing) > 0 {
 		t.Fatalf("missing field %v", missing)
 	}
+}
 
+func TestListOfStructsWasJSON(t *testing.T) {
+	jsonStr := `{
+		"Number": 456
+	}`
+	v := make(map[string]any)
+	if err := json.Unmarshal([]byte(jsonStr), &v); err != nil {
+		t.Fatalf("err <%v> unmarshaling json from <%s>", err, jsonStr)
+	}
+	p := NewReflectParser(WithJsonNumber)
+	p.Init(reflect.ValueOf(v))
+	if err := p.Next(); err != nil {
+		t.Fatal(err)
+	}
+	if v, err := p.String(); err != nil || v != "Number" {
+		t.Fatalf("expected field Number, but got %s, %s", v, err)
+	}
+	p.Down()
+	if err := p.Next(); err != nil {
+		t.Fatal(err)
+	}
+	if v, err := p.Int(); err != nil || v != 456 {
+		t.Fatalf("expected number 456, but got %d, %s", v, err)
+	}
+	if v, err := p.Uint(); err != nil || v != 456 {
+		t.Fatalf("expected number 456, but got %d, %s", v, err)
+	}
+	if v, err := p.Double(); err != nil || v != 456 {
+		t.Fatalf("expected number 456, but got %f, %s", v, err)
+	}
+	p.Up()
+	if err := p.Next(); err != io.EOF {
+		t.Fatal(err)
+	}
 }
