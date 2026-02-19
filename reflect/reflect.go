@@ -86,7 +86,7 @@ type ReflectParser interface {
 	parser.Interface
 	//Init initialises the parser with a value of reflected go structure.
 	Init(value reflect.Value) ReflectParser
-	Reset()
+	Reset() error
 }
 
 // NewReflectParser returns a new reflect parser.
@@ -101,8 +101,9 @@ func (s *reflectParser) Init(value reflect.Value) ReflectParser {
 	return s
 }
 
-func (s *reflectParser) Reset() {
+func (s *reflectParser) Reset() error {
 	s.Init(s.original)
+	return nil
 }
 
 func (s *reflectParser) Next() error {
