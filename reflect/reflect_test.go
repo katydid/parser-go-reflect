@@ -15,6 +15,7 @@
 package reflect
 
 import (
+	"encoding/json"
 	"io"
 	"math/rand"
 	"reflect"
@@ -259,4 +260,110 @@ func TestMapOfInterface(t *testing.T) {
 	if err := p.Next(); err != io.EOF {
 		t.Fatal(err)
 	}
+}
+
+func TestListOfStructs(t *testing.T) {
+	jsonStr := `{
+		"Name": "Robert",
+		"Addresses": [
+			{
+				"Number": 456,
+				"Street": "TheStreet"
+			}
+		],
+		"Telephone": "0127897897"
+	}`
+	v := make(map[string]any)
+	if err := json.Unmarshal([]byte(jsonStr), &v); err != nil {
+		t.Fatalf("err <%v> unmarshaling json from <%s>", err, jsonStr)
+	}
+	p := NewReflectParser()
+	p.Init(reflect.ValueOf(v))
+	missing := map[string]struct{}{"Name": {}, "Addresses": {}, "Telephone": {}}
+	looperr := p.Next()
+	for looperr == nil {
+		fieldName, err := p.String()
+		if err != nil {
+			t.Fatal(err)
+		}
+		switch fieldName {
+		case "Name":
+			delete(missing, "Name")
+			p.Down()
+			if err := p.Next(); err != nil {
+				t.Fatal(err)
+			}
+			if v, err := p.String(); err != nil || v != "Robert" {
+				t.Fatalf("expected value Robert, but got %s, %s", v, err)
+			}
+			p.Up()
+		case "Addresses":
+			delete(missing, "Addresses")
+			p.Down()
+			if err := p.Next(); err != nil {
+				t.Fatal(err)
+			}
+			if v, err := p.Int(); err != nil || v != 0 {
+				t.Fatalf("expected index 0, but got %d, %s", v, err)
+			}
+			p.Down()
+			missing2 := map[string]struct{}{"Number": {}, "Street": {}}
+			looperr2 := p.Next()
+			for looperr2 == nil {
+				fieldName2, err := p.String()
+				if err != nil {
+					t.Fatal(err)
+				}
+				switch fieldName2 {
+				case "Number":
+					delete(missing2, "Number")
+					p.Down()
+					if err := p.Next(); err != nil {
+						t.Fatal(err)
+					}
+					if v, err := p.Double(); err != nil || v != 456 {
+						t.Fatalf("expected value 456, but got %v, %s", v, err)
+					}
+					p.Up()
+				case "Street":
+					delete(missing2, "Street")
+					p.Down()
+					if err := p.Next(); err != nil {
+						t.Fatal(err)
+					}
+					if v, err := p.String(); err != nil || v != "TheStreet" {
+						t.Fatalf("expected value TheStreet, but got %s, %s", v, err)
+					}
+					p.Up()
+				}
+				looperr2 = p.Next()
+			}
+			p.Up()
+			if looperr2 != io.EOF {
+				t.Fatal(looperr2)
+			}
+			if len(missing2) > 0 {
+				t.Fatalf("missing field %v", missing2)
+			}
+			p.Up()
+		case "Telephone":
+			delete(missing, "Telephone")
+			p.Down()
+			if err := p.Next(); err != nil {
+				t.Fatal(err)
+			}
+			if v, err := p.String(); err != nil || v != "0127897897" {
+				t.Fatalf("expected value 0127897897, but got %s, %s", v, err)
+			}
+			p.Up()
+		}
+		looperr = p.Next()
+	}
+	if looperr != io.EOF {
+		t.Fatal(looperr)
+	}
+	if len(missing) > 0 {
+		t.Fatalf("missing field %v", missing)
+	}
+
 }
