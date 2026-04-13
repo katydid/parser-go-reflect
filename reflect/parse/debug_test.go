@@ -1,0 +1,49 @@
+// Copyright 2026 Walter Schulze
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     https://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+package parse
+
+import (
+	"reflect"
+	"testing"
+
+	"github.com/katydid/parser-go/compat/downgrade"
+	"github.com/katydid/parser-go/parser/debug"
+)
+
+func TestDebug(t *testing.T) {
+	p := NewParser()
+	p.Init(reflect.ValueOf(debug.Input))
+	m, err := debug.Parse(downgrade.Parser(p))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !m.Equal(debug.Output) {
+		t.Fatalf("expected %s but got %s", debug.Output, m)
+	}
+}
+
+func TestRandomDebug(t *testing.T) {
+	p := NewParser()
+	for i := 0; i < 10; i++ {
+		p.Init(reflect.ValueOf(debug.Input))
+		parser := downgrade.Parser(p)
+		// l := debug.NewLogger(parser, debug.NewLineLogger())
+		err := debug.RandomWalk(parser, debug.NewRand(), 10, 3)
+		if err != nil {
+			t.Fatal(err)
+		}
+		// t.Logf("original %v vs random %v", debug.Input, debug.Output)
+	}
+}
