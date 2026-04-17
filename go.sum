@@ -1,2 +1,4 @@
 github.com/katydid/parser-go v0.8.0 h1:Tv31ktbvGLOgXIWJwfrOcRcOADp2PyJIL9T1vPGK1YA=
 github.com/katydid/parser-go v0.8.0/go.mod h1:e6PzxUlxRtkeyCMHQW7l+xG6/r/3edg14k2KK4l2WL4=
+github.com/katydid/parser-go-json v0.4.0 h1:WYt4yIahz6tW6cquVDrREPwgycX07bu+8BBLoMxDHNw=
+github.com/katydid/parser-go-json v0.4.0/go.mod h1:lIjTH4ExrIr9bS4iKboNLyCR1JEOgCDR2dx1QsMg4F0=

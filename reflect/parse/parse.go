@@ -18,6 +18,7 @@ import (
 	"io"
 	"reflect"
 
+	"github.com/katydid/parser-go-json/json/jsonschema"
 	"github.com/katydid/parser-go/cast"
 	"github.com/katydid/parser-go/parse"
 )
@@ -34,8 +35,9 @@ type parser struct {
 type Parser interface {
 	parse.Parser
 	//Init initialises the parser with a value of reflected go structure.
+	jsonschema.JSONSchemaAble
 	Init(value reflect.Value)
-	Reset() error
+	Reset()
 }
 
 // NewParser returns a new reflect parser.
@@ -52,9 +54,9 @@ func (p *parser) Init(value reflect.Value) {
 	return
 }
 
-func (p *parser) Reset() error {
+func (p *parser) Reset() {
 	p.Init(p.original)
-	return nil
+	return
 }
 
 func (p *parser) nextField(fieldKind fieldKind) bool {
@@ -220,6 +222,16 @@ func (p *parser) Token() (parse.Kind, []byte, error) {
 		return p.getToken(p.value)
 	}
 	return parse.UnknownKind, nil, nil
+}
+
+func (p *parser) JSONSchemaType() jsonschema.JSONSchemaType {
+	switch p.state.kind {
+	case enterStructState, enterMapState:
+		return jsonschema.JSONSchemaTypeObject
+	case enterSliceState:
+		return jsonschema.JSONSchemaTypeArray
+	}
+	return jsonschema.JSONSchemaTypeUnknown
 }
 
 func (p *parser) Skip() error {
