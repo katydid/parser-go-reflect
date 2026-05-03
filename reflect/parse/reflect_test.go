@@ -312,7 +312,7 @@ func TestWasJSON(t *testing.T) {
 	if err := json.Unmarshal([]byte(jsonStr), &v); err != nil {
 		t.Fatalf("err <%v> unmarshaling json from <%s>", err, jsonStr)
 	}
-	p := NewParser(WithJsonNumber)
+	p := NewParser()
 	p.Init(reflect.ValueOf(v))
 	expect.Hint(t, p, parse.EnterHint)
 	expect.Hint(t, p, parse.FieldHint)

@@ -21,15 +21,22 @@ import (
 	"testing"
 	"time"
 
-	"github.com/katydid/parser-go/parser"
+	goparse "github.com/katydid/parser-go/parse"
 )
+
+type TestStruct struct {
+	A string
+	B *int64
+	C []string
+	M map[string]int64
+}
 
 func BenchmarkWithRandomMapTestStruct(b *testing.B) {
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
-	ps := make([]ReflectParser, 1000)
+	ps := make([]Parser, 1000)
 	for i := 0; i < 1000; i++ {
 		s := randMap(r, reflect.TypeOf(make(map[string]*TestStruct)))
-		ps[i] = NewReflectParser()
+		ps[i] = NewParser()
 		ps[i].Init(reflect.ValueOf(s))
 	}
 	b.ReportAllocs()
@@ -41,25 +48,14 @@ func BenchmarkWithRandomMapTestStruct(b *testing.B) {
 	}
 }
 
-func walk(p parser.Interface) error {
+func walk(p goparse.Parser) error {
 	for {
-		if err := p.Next(); err != nil {
-			if err == io.EOF {
-				break
-			} else {
-				return err
-			}
+		_, err := p.Next()
+		if err != nil && err == io.EOF {
+			return nil
 		}
-		if p.IsLeaf() {
-
-		} else {
-			p.Down()
-			err := walk(p)
-			if err != nil {
-				return err
-			}
-			p.Up()
+		if err != nil {
+			return err
 		}
 	}
-	return nil
 }

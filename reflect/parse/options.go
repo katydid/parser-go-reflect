@@ -14,9 +14,7 @@
 
 package parse
 
-type options struct {
-	jsonNumber bool
-}
+type options struct{}
 
 type Option = func(o *options)
 
@@ -26,11 +24,4 @@ func newOptions(opts ...Option) options {
 		opt(o)
 	}
 	return *o
-}
-
-// WithJsonNumber assumes that this is a reflection of JSON that was unmarshaled into a dynamic map.
-// When unmarshaling from JSON into a dynamic map integers become doubles, but we still want to validate them as integers.
-// This option makes Ints and Uints also return Doubles.
-func WithJsonNumber(o *options) {
-	o.jsonNumber = true
 }

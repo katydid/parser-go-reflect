@@ -16,275 +16,42 @@
 package reflect
 
 import (
-	"io"
 	"reflect"
 
-	"github.com/katydid/parser-go/parser"
+	"github.com/katydid/parser-go-json/json/tag"
+	"github.com/katydid/parser-go-reflect/reflect/parse"
+	goparse "github.com/katydid/parser-go/parse"
 )
 
-type state struct {
-	parent   reflect.Value
-	typ      reflect.StructField
-	value    reflect.Value
-	field    int
-	maxField int
-	isLeaf   bool
-	isArray  bool
-	mapIter  *reflect.MapIter
+// Parser is a parser for a reflected go structure.
+type Parser interface {
+	goparse.Parser
+	//Init initialises the parser with a value of reflected go structure.
+	Init(value reflect.Value)
+	Reset()
+}
+
+// NewParser returns a new reflect parser.
+func NewParser(options ...Option) Parser {
+	return parse.NewParser()
+}
+
+// NewJSONSchemaParser returns a new reflect parser that tags objects and arrays, so that the types can be checked by JSONSchema.
+// The following json: `{"a": ["b", "c"]}`
+// is parsed as: `{"object": {"a": {"array": {0: "b", 1: "c"}}}}`.
+// The kind returned from the Token method for "object" and "array" will be parse.TagKind.
+func NewJSONSchemaParser() Parser {
+	parser := parse.NewParser()
+	taggedParser := tag.NewTagger(parser, tag.WithTags())
+	return &reflectParser{Parser: taggedParser, underlying: parser}
 }
 
 type reflectParser struct {
-	options
-	state
-	original reflect.Value
-	stack    []state
+	tag.Parser
+	underlying parse.Parser
 }
 
-func deref(v reflect.Value) reflect.Value {
-	if v.Kind() == reflect.Ptr {
-		return v.Elem()
-	} else if v.Kind() == reflect.Interface {
-		// get underlying type of interface
-		return v.Elem()
-	}
-	return v
-}
-
-func newState(val reflect.Value) state {
-	value := deref(val)
-	if value.Kind() == reflect.Struct {
-		return state{
-			parent:   value,
-			maxField: value.NumField(),
-		}
-	} else if isSlice(value) {
-		return state{
-			parent:   value,
-			maxField: value.Len(),
-			isArray:  true,
-		}
-	} else if value.Kind() == reflect.Map {
-		return state{
-			parent:   value,
-			maxField: value.Len(),
-			mapIter:  value.MapRange(),
-		}
-	}
-	return state{
-		value:    val,
-		isLeaf:   true,
-		maxField: 1,
-	}
-}
-
-func isSlice(v reflect.Value) bool {
-	return v.Kind() == reflect.Slice && v.Type().Elem().Kind() != reflect.Uint8
-}
-
-// ReflectParser is a parser for a reflected go structure.
-type ReflectParser interface {
-	parser.Interface
-	//Init initialises the parser with a value of reflected go structure.
-	Init(value reflect.Value) ReflectParser
-	Reset() error
-}
-
-// NewReflectParser returns a new reflect parser.
-func NewReflectParser(options ...Option) ReflectParser {
-	return &reflectParser{options: newOptions(options...), stack: make([]state, 0, 10)}
-}
-
-func (s *reflectParser) Init(value reflect.Value) ReflectParser {
-	s.state = newState(value)
-	s.original = value
-	s.stack = s.stack[:0]
-	return s
-}
-
-func (s *reflectParser) Reset() error {
-	s.Init(s.original)
-	return nil
-}
-
-func (s *reflectParser) Next() error {
-	if s.field >= s.maxField {
-		return io.EOF
-	}
-	if s.mapIter != nil {
-		s.mapIter.Next()
-	} else if !s.isLeaf && !s.isArray {
-		s.typ = s.parent.Type().Field(s.field)
-		s.value = s.parent.Field(s.field)
-		if s.value.Kind() == reflect.Ptr {
-			if s.value.IsNil() {
-				s.field++
-				return s.Next()
-			}
-		} else if s.value.Kind() == reflect.Slice {
-			if s.value.IsNil() || s.value.Len() == 0 {
-				s.field++
-				return s.Next()
-			}
-		} else if s.value.Kind() == reflect.Map {
-			if s.value.IsNil() || s.value.Len() == 0 {
-				s.field++
-				return s.Next()
-			}
-		}
-	}
-	s.field++
-	return nil
-}
-
-func (s *reflectParser) IsLeaf() bool {
-	return s.isLeaf
-}
-
-func (s *reflectParser) getValue() reflect.Value {
-	return deref(s.value)
-}
-
-func (s *reflectParser) Double() (float64, error) {
-	if s.isLeaf {
-		value := s.getValue()
-		switch value.Kind() {
-		case reflect.Float64, reflect.Float32:
-			return value.Float(), nil
-		}
-	} else if s.mapIter != nil {
-		value := s.mapIter.Key()
-		switch value.Kind() {
-		case reflect.Float64, reflect.Float32:
-			return value.Float(), nil
-		}
-	}
-	return 0, parser.ErrNotDouble
-}
-
-func (s *reflectParser) Int() (int64, error) {
-	if s.isArray {
-		return int64(s.field - 1), nil
-	}
-	if s.isLeaf {
-		value := s.getValue()
-		switch value.Kind() {
-		case reflect.Int64, reflect.Int32:
-			return value.Int(), nil
-		case reflect.Float64:
-			if s.jsonNumber {
-				d := value.Float()
-				return int64(d), nil
-			}
-		}
-	} else if s.mapIter != nil {
-		value := s.mapIter.Key()
-		switch value.Kind() {
-		case reflect.Int64, reflect.Int32:
-			return value.Int(), nil
-		case reflect.Float64:
-			if s.jsonNumber {
-				d := value.Float()
-				return int64(d), nil
-			}
-		}
-	}
-	return 0, parser.ErrNotInt
-}
-
-func (s *reflectParser) Uint() (uint64, error) {
-	if s.isLeaf {
-		value := s.getValue()
-		switch value.Kind() {
-		case reflect.Uint64, reflect.Uint32:
-			return value.Uint(), nil
-		case reflect.Float64:
-			if s.jsonNumber {
-				d := value.Float()
-				return uint64(d), nil
-			}
-		}
-	} else if s.mapIter != nil {
-		value := s.mapIter.Key()
-		switch value.Kind() {
-		case reflect.Uint64, reflect.Uint32:
-			return value.Uint(), nil
-		case reflect.Float64:
-			if s.jsonNumber {
-				d := value.Float()
-				return uint64(d), nil
-			}
-		}
-	}
-	return 0, parser.ErrNotUint
-}
-
-func (s *reflectParser) Bool() (bool, error) {
-	if s.isLeaf {
-		value := s.getValue()
-		switch value.Kind() {
-		case reflect.Bool:
-			return value.Bool(), nil
-		}
-	} else if s.mapIter != nil {
-		value := s.mapIter.Key()
-		switch value.Kind() {
-		case reflect.Bool:
-			return value.Bool(), nil
-		}
-	}
-	return false, parser.ErrNotBool
-}
-
-func (s *reflectParser) String() (string, error) {
-	if s.isLeaf {
-		value := s.getValue()
-		switch value.Kind() {
-		case reflect.String:
-			return value.String(), nil
-		}
-	} else if s.mapIter != nil {
-		value := s.mapIter.Key()
-		switch value.Kind() {
-		case reflect.String:
-			return value.String(), nil
-		}
-	} else {
-		return s.typ.Name, nil
-	}
-
-	return "", parser.ErrNotString
-}
-
-func (s *reflectParser) Bytes() ([]byte, error) {
-	if s.isLeaf {
-		value := s.getValue()
-		switch value.Kind() {
-		case reflect.Slice, reflect.Uint8, reflect.Int8:
-			return value.Bytes(), nil
-		}
-	} else if s.mapIter != nil {
-		value := s.mapIter.Key()
-		switch value.Kind() {
-		case reflect.Slice, reflect.Uint8, reflect.Int8:
-			return value.Bytes(), nil
-		}
-	}
-	return nil, parser.ErrNotBytes
-}
-
-func (s *reflectParser) Up() {
-	top := len(s.stack) - 1
-	s.state = s.stack[top]
-	s.stack = s.stack[:top]
-}
-
-func (s *reflectParser) Down() {
-	s.stack = append(s.stack, s.state)
-	if s.isArray {
-		s.state = newState(s.state.parent.Index(s.field - 1))
-	} else if s.mapIter != nil {
-		s.state = newState(s.mapIter.Value())
-	} else {
-		s.state = newState(s.state.value)
-	}
+func (r *reflectParser) Init(value reflect.Value) {
+	r.Parser.Reset()
+	r.underlying.Init(value)
 }
