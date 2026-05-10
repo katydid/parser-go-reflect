@@ -21,6 +21,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/katydid/parser-go/cast"
 	"github.com/katydid/parser-go/expect"
 	"github.com/katydid/parser-go/parse"
 )
@@ -409,6 +410,51 @@ func TestListOfStructsWasJSON(t *testing.T) {
 	}
 	if len(missing) > 0 {
 		t.Fatalf("missing field %v", missing)
+	}
+	expect.EOF(t, p)
+}
+
+func TestSingleValue(t *testing.T) {
+	want := int64(1)
+	p := NewParser()
+	p.Init(reflect.ValueOf(want))
+	hint, err := p.Next()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if hint != parse.ValueHint {
+		t.Fatalf("expected ValueHint but got %v", hint)
+	}
+	kind, val, err := p.Token()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if kind != parse.Int64Kind {
+		t.Fatalf("expected Int64Kind but got %v", kind)
+	}
+	got := cast.ToInt64(val)
+	if got != want {
+		t.Fatalf("got %v want %v", got, want)
+	}
+	expect.EOF(t, p)
+}
+
+func TestNil(t *testing.T) {
+	p := NewParser()
+	p.Init(reflect.ValueOf(nil))
+	hint, err := p.Next()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if hint != parse.ValueHint {
+		t.Fatalf("expected ValueHint but got %v", hint)
+	}
+	kind, _, err := p.Token()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if kind != parse.NullKind {
+		t.Fatalf("expected NullKind but got %v", kind)
 	}
 	expect.EOF(t, p)
 }

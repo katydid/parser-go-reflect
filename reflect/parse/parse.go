@@ -108,6 +108,10 @@ func (p *parser) Next() (parse.Hint, error) {
 			s.kind = enterSliceState
 		case mapKind:
 			s.kind = enterMapState
+		case valueKind:
+			s.kind = valueState
+			p.down(s)
+			return parse.ValueHint, nil
 		}
 		p.down(s)
 		return parse.EnterHint, nil
@@ -205,6 +209,8 @@ func (p *parser) getToken(val reflect.Value) (parse.Kind, []byte, error) {
 			return parse.TrueKind, nil, nil
 		}
 		return parse.FalseKind, nil, nil
+	case reflect.Invalid:
+		return parse.NullKind, nil, nil
 	}
 	panic(fmt.Sprintf("unreachable val.Kind %v", val.Kind()))
 }
@@ -222,6 +228,7 @@ func (p *parser) Token() (parse.Kind, []byte, error) {
 	case valueState:
 		return p.getToken(p.value)
 	}
+	panic(fmt.Sprintf("%c", p.state.kind))
 	return parse.UnknownKind, nil, nil
 }
 
