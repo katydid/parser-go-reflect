@@ -15,6 +15,7 @@
 package parse
 
 import (
+	"fmt"
 	"io"
 	"reflect"
 
@@ -92,7 +93,7 @@ func (p *parser) nextField(fieldKind fieldKind) bool {
 		p.field++
 		return false
 	}
-	panic("unreachable")
+	panic(fmt.Sprintf("unreachable fieldKind %v", fieldKind))
 }
 
 func (p *parser) Next() (parse.Hint, error) {
@@ -133,7 +134,7 @@ func (p *parser) Next() (parse.Hint, error) {
 		case valueKind:
 			return parse.ValueHint, nil
 		}
-		panic("unreachable")
+		panic(fmt.Sprintf("unreachable fieldKind %v", s.fieldKind))
 	case enterSliceState:
 		ok := p.nextField(sliceKind)
 		if !ok {
@@ -155,7 +156,7 @@ func (p *parser) Next() (parse.Hint, error) {
 		case valueKind:
 			return parse.ValueHint, nil
 		}
-		panic("unreachable")
+		panic(fmt.Sprintf("unreachable fieldKind %v", s.fieldKind))
 	case enterMapState:
 		ok := p.nextField(mapKind)
 		if !ok {
@@ -177,7 +178,7 @@ func (p *parser) Next() (parse.Hint, error) {
 		case valueKind:
 			return parse.ValueHint, nil
 		}
-		panic("unreachable")
+		panic(fmt.Sprintf("unreachable fieldKind %v", s.fieldKind))
 	case valueState:
 		if err := p.up(); err != nil {
 			return parse.UnknownHint, err
@@ -185,7 +186,7 @@ func (p *parser) Next() (parse.Hint, error) {
 		// cheat and use one of the enter... states to call `nextField` and check if `up` should be called again.
 		return p.Next()
 	}
-	panic("unreachable")
+	panic(fmt.Sprintf("unreachable stateKind %v", p.state.kind))
 }
 
 func (p *parser) getToken(val reflect.Value) (parse.Kind, []byte, error) {
@@ -205,7 +206,7 @@ func (p *parser) getToken(val reflect.Value) (parse.Kind, []byte, error) {
 		}
 		return parse.FalseKind, nil, nil
 	}
-	panic("unreachable")
+	panic(fmt.Sprintf("unreachable val %T", val))
 }
 
 func (p *parser) Token() (parse.Kind, []byte, error) {
