@@ -206,7 +206,7 @@ func (p *parser) getToken(val reflect.Value) (parse.Kind, []byte, error) {
 		}
 		return parse.FalseKind, nil, nil
 	}
-	panic(fmt.Sprintf("unreachable val %T", val))
+	panic(fmt.Sprintf("unreachable val.Kind %v", val.Kind()))
 }
 
 func (p *parser) Token() (parse.Kind, []byte, error) {
