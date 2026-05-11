@@ -15,6 +15,7 @@
 package parse
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 	"reflect"
@@ -195,6 +196,23 @@ func (p *parser) Next() (parse.Hint, error) {
 
 func (p *parser) getToken(val reflect.Value) (parse.Kind, []byte, error) {
 	val = deref(val)
+	if val.Kind() == reflect.Invalid {
+		return parse.NullKind, nil, nil
+	}
+	if val.CanInterface() {
+		ival := val.Interface()
+		switch x := ival.(type) {
+		case json.Number:
+			vint, err := x.Int64()
+			if err == nil {
+				return parse.Int64Kind, cast.FromInt64(vint, p.alloc), nil
+			}
+			vfloat, err := x.Float64()
+			if err == nil {
+				return parse.Float64Kind, cast.FromFloat64(vfloat, p.alloc), nil
+			}
+		}
+	}
 	switch val.Kind() {
 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
 		return parse.Int64Kind, cast.FromInt64(val.Int(), p.alloc), nil
@@ -209,8 +227,6 @@ func (p *parser) getToken(val reflect.Value) (parse.Kind, []byte, error) {
 			return parse.TrueKind, nil, nil
 		}
 		return parse.FalseKind, nil, nil
-	case reflect.Invalid:
-		return parse.NullKind, nil, nil
 	}
 	panic(fmt.Sprintf("unreachable val.Kind %v", val.Kind()))
 }
@@ -228,7 +244,6 @@ func (p *parser) Token() (parse.Kind, []byte, error) {
 	case valueState:
 		return p.getToken(p.value)
 	}
-	panic(fmt.Sprintf("%c", p.state.kind))
 	return parse.UnknownKind, nil, nil
 }
 

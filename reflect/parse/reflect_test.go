@@ -15,6 +15,7 @@
 package parse
 
 import (
+	"bytes"
 	"encoding/json"
 	"math/rand"
 	"reflect"
@@ -456,5 +457,72 @@ func TestNil(t *testing.T) {
 	if kind != parse.NullKind {
 		t.Fatalf("expected NullKind but got %v", kind)
 	}
+	expect.EOF(t, p)
+}
+
+func TestLargeNumberAlone(t *testing.T) {
+	want := int64(4937305690741089630)
+	p := NewParser()
+	p.Init(reflect.ValueOf(want))
+	hint, err := p.Next()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if hint != parse.ValueHint {
+		t.Fatalf("expected ValueHint but got %v", hint)
+	}
+	kind, val, err := p.Token()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if kind != parse.Int64Kind {
+		t.Fatalf("expected Int64Kind but got %v", kind)
+	}
+	got := cast.ToInt64(val)
+	if got != want {
+		t.Fatalf("got %v want %v", got, want)
+	}
+	expect.EOF(t, p)
+}
+
+func TestLargeNumberWithJSONUnmarshalling(t *testing.T) {
+	want := int64(4937305690741089630)
+
+	unmarshalJSON := func(data []byte, v any) error {
+		dec := json.NewDecoder(bytes.NewReader(data))
+		dec.UseNumber()
+		return dec.Decode(v)
+	}
+
+	unmarshalToMap := func(data []byte) (map[string]any, error) {
+		m := make(map[string]any)
+		err := unmarshalJSON(data, &m)
+		return m, err
+	}
+
+	input, err := unmarshalToMap([]byte(`{"a": 4937305690741089630}`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	p := NewParser()
+	p.Init(reflect.ValueOf(input))
+
+	expect.Hint(t, p, parse.EnterHint)
+	expect.Hint(t, p, parse.FieldHint)
+	expect.String(t, p, "a")
+	expect.Hint(t, p, parse.ValueHint)
+
+	kind, val, err := p.Token()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if kind != parse.Int64Kind {
+		t.Fatalf("expected Int64Kind but got %v", kind)
+	}
+	got := cast.ToInt64(val)
+	if got != want {
+		t.Fatalf("got %v want %v", got, want)
+	}
+	expect.Hint(t, p, parse.LeaveHint)
 	expect.EOF(t, p)
 }
