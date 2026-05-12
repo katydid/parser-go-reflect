@@ -14,7 +14,9 @@
 
 package parse
 
-import "reflect"
+import (
+	"reflect"
+)
 
 type stateKind rune
 

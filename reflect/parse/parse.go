@@ -31,6 +31,10 @@ type parser struct {
 	original reflect.Value
 	alloc    func(size int) []byte
 	stack    []state
+
+	// cache tokens
+	tokenKind parse.Kind
+	tokenVal  []byte
 }
 
 // Parser is a parser for a reflected go structure.
@@ -98,6 +102,7 @@ func (p *parser) nextField(fieldKind fieldKind) bool {
 }
 
 func (p *parser) Next() (parse.Hint, error) {
+	p.tokenKind = parse.UnknownKind
 	switch p.state.kind {
 	case startState:
 		p.state.kind = endState
@@ -232,19 +237,36 @@ func (p *parser) getToken(val reflect.Value) (parse.Kind, []byte, error) {
 }
 
 func (p *parser) Token() (parse.Kind, []byte, error) {
+	if p.tokenKind != parse.UnknownKind {
+		return p.tokenKind, p.tokenVal, nil
+	}
 	switch p.state.kind {
 	case fieldStructState:
+		p.tokenKind = parse.StringKind
 		fieldType := p.parent.Type().Field(p.field)
-		return parse.StringKind, []byte(fieldType.Name), nil
+		p.tokenVal = cast.FromString(fieldType.Name, p.alloc)
 	case fieldSliceState:
-		return parse.Int64Kind, cast.FromInt64(int64(p.field), p.alloc), nil
+		p.tokenKind = parse.Int64Kind
+		p.tokenVal = cast.FromInt64(int64(p.field), p.alloc)
 	case fieldMapState:
 		keyValue := p.mapIter.Key()
-		return p.getToken(keyValue)
+		tokenKind, tokenVal, err := p.getToken(keyValue)
+		if err != nil {
+			return tokenKind, tokenVal, err
+		}
+		p.tokenKind = tokenKind
+		p.tokenVal = tokenVal
 	case valueState:
-		return p.getToken(p.value)
+		tokenKind, tokenVal, err := p.getToken(p.value)
+		if err != nil {
+			return tokenKind, tokenVal, err
+		}
+		p.tokenKind = tokenKind
+		p.tokenVal = tokenVal
+	default:
+		return parse.UnknownKind, nil, nil
 	}
-	return parse.UnknownKind, nil, nil
+	return p.tokenKind, p.tokenVal, nil
 }
 
 func (p *parser) JSONSchemaType() jsonschema.JSONSchemaType {
@@ -258,6 +280,7 @@ func (p *parser) JSONSchemaType() jsonschema.JSONSchemaType {
 }
 
 func (p *parser) Skip() error {
+	p.tokenKind = parse.UnknownKind
 	switch p.state.kind {
 	case startState:
 		_, err := p.Next()
