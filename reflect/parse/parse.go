@@ -227,7 +227,7 @@ func (p *parser) getToken(val reflect.Value) (parse.Kind, []byte, error) {
 	case reflect.Float32, reflect.Float64:
 		return parse.Float64Kind, cast.FromFloat64(val.Float(), p.alloc), nil
 	case reflect.String:
-		return parse.StringKind, []byte(val.String()), nil
+		return parse.StringKind, cast.FromString(val.String(), p.alloc), nil
 	case reflect.Bool:
 		if val.Bool() {
 			return parse.TrueKind, nil, nil
@@ -245,7 +245,7 @@ func (p *parser) Token() (parse.Kind, []byte, error) {
 	case fieldStructState:
 		p.tokenKind = parse.StringKind
 		fieldType := p.parent.Type().Field(p.field)
-		p.tokenVal = []byte(fieldType.Name)
+		p.tokenVal = cast.FromString(fieldType.Name, p.alloc)
 	case fieldSliceState:
 		p.tokenKind = parse.Int64Kind
 		p.tokenVal = cast.FromInt64(int64(p.field), p.alloc)
