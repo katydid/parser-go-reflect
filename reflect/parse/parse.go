@@ -103,6 +103,7 @@ func (p *parser) nextField(fieldKind fieldKind) bool {
 
 func (p *parser) Next() (parse.Hint, error) {
 	p.tokenKind = parse.UnknownKind
+	p.tokenVal = nil
 	switch p.state.kind {
 	case startState:
 		p.state.kind = endState
@@ -281,6 +282,7 @@ func (p *parser) JSONSchemaType() jsonschema.JSONSchemaType {
 
 func (p *parser) Skip() error {
 	p.tokenKind = parse.UnknownKind
+	p.tokenVal = nil
 	switch p.state.kind {
 	case startState:
 		_, err := p.Next()
