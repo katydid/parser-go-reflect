@@ -244,7 +244,7 @@ func (p *parser) Token() (parse.Kind, []byte, error) {
 	case fieldStructState:
 		p.tokenKind = parse.StringKind
 		fieldType := p.parent.Type().Field(p.field)
-		p.tokenVal = cast.FromString(fieldType.Name, p.alloc)
+		p.tokenVal = []byte(fieldType.Name)
 	case fieldSliceState:
 		p.tokenKind = parse.Int64Kind
 		p.tokenVal = cast.FromInt64(int64(p.field), p.alloc)
