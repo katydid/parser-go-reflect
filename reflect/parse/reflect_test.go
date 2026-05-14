@@ -44,6 +44,8 @@ func checkTestStruct(t *testing.T, s *TestStruct, p Parser) {
 	expect.Hint(t, p, parse.EnterHint)
 	expect.Hint(t, p, parse.FieldHint)
 	expect.String(t, p, "A")
+	// test cache
+	expect.String(t, p, "A")
 	expect.Hint(t, p, parse.ValueHint)
 	expect.String(t, p, s.A)
 
@@ -51,6 +53,8 @@ func checkTestStruct(t *testing.T, s *TestStruct, p Parser) {
 		expect.Hint(t, p, parse.FieldHint)
 		expect.String(t, p, "B")
 		expect.Hint(t, p, parse.ValueHint)
+		expect.Int(t, p, *s.B)
+		// test cache
 		expect.Int(t, p, *s.B)
 	}
 
@@ -61,7 +65,11 @@ func checkTestStruct(t *testing.T, s *TestStruct, p Parser) {
 		for i, c := range s.C {
 			expect.Hint(t, p, parse.FieldHint)
 			expect.Int(t, p, int64(i))
+			// test cache
+			expect.Int(t, p, int64(i))
 			expect.Hint(t, p, parse.ValueHint)
+			expect.String(t, p, c)
+			// test cache
 			expect.String(t, p, c)
 		}
 		expect.Hint(t, p, parse.LeaveHint)

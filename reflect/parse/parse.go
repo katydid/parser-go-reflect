@@ -57,8 +57,7 @@ func (p *parser) Init(value reflect.Value) {
 	p.original = value
 	p.alloc = func(size int) []byte { return make([]byte, size) }
 	p.stack = p.stack[:0]
-	p.tokenKind = parse.UnknownKind
-	p.tokenVal = nil
+	p.resetCache()
 	return
 }
 
@@ -103,9 +102,13 @@ func (p *parser) nextField(fieldKind fieldKind) bool {
 	panic(fmt.Sprintf("unreachable fieldKind %v", fieldKind))
 }
 
-func (p *parser) Next() (parse.Hint, error) {
+func (p *parser) resetCache() {
 	p.tokenKind = parse.UnknownKind
 	p.tokenVal = nil
+}
+
+func (p *parser) Next() (parse.Hint, error) {
+	p.resetCache()
 	switch p.state.kind {
 	case startState:
 		p.state.kind = endState
@@ -278,8 +281,7 @@ func (p *parser) JSONSchemaType() jsonschema.JSONSchemaType {
 }
 
 func (p *parser) Skip() error {
-	p.tokenKind = parse.UnknownKind
-	p.tokenVal = nil
+	p.resetCache()
 	switch p.state.kind {
 	case startState:
 		_, err := p.Next()
