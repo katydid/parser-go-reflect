@@ -29,6 +29,9 @@ install:
 bench:
 	go test -test.v -test.run=XXX -test.bench=. ./...
 
+profile:
+	(cd reflect && go test -run=XXX -bench=BenchmarkWithRandomMapTestStruct -benchmem -cpuprofile=../cpu.out -memprofile=../mem.out)
+
 gofmt:
 	gofmt -l -s -w .
 

@@ -32,9 +32,10 @@ type TestStruct struct {
 }
 
 func BenchmarkWithRandomMapTestStruct(b *testing.B) {
+	num := 1000
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
-	ps := make([]Parser, 1000)
-	for i := 0; i < 1000; i++ {
+	ps := make([]Parser, num)
+	for i := 0; i < num; i++ {
 		s := randMap(r, reflect.TypeOf(make(map[string]*TestStruct)))
 		ps[i] = NewParser()
 		ps[i].Init(reflect.ValueOf(s))
@@ -42,7 +43,7 @@ func BenchmarkWithRandomMapTestStruct(b *testing.B) {
 	b.ReportAllocs()
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		p := ps[i%1000]
+		p := ps[i%num]
 		p.Reset()
 		walk(p)
 	}

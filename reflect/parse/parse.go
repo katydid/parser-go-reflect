@@ -107,20 +107,18 @@ func (p *parser) Next() (parse.Hint, error) {
 	switch p.state.kind {
 	case startState:
 		p.state.kind = endState
-		s := newState(p.original)
-		switch s.fieldKind {
+		p.down(p.original)
+		switch p.state.fieldKind {
 		case structKind:
-			s.kind = enterStructState
+			p.state.kind = enterStructState
 		case sliceKind:
-			s.kind = enterSliceState
+			p.state.kind = enterSliceState
 		case mapKind:
-			s.kind = enterMapState
+			p.state.kind = enterMapState
 		case valueKind:
-			s.kind = valueState
-			p.down(s)
+			p.state.kind = valueState
 			return parse.ValueHint, nil
 		}
-		p.down(s)
 		return parse.EnterHint, nil
 	case endState:
 		return parse.UnknownHint, io.EOF
@@ -137,15 +135,14 @@ func (p *parser) Next() (parse.Hint, error) {
 	case fieldStructState:
 		fieldValue := p.parent.Field(p.field)
 		p.state.kind = enterStructState
-		s := newState(fieldValue)
-		p.down(s)
-		switch s.fieldKind {
+		p.down(fieldValue)
+		switch p.state.fieldKind {
 		case structKind, sliceKind, mapKind:
 			return parse.EnterHint, nil
 		case valueKind:
 			return parse.ValueHint, nil
 		}
-		panic(fmt.Sprintf("unreachable fieldKind %v", s.fieldKind))
+		panic(fmt.Sprintf("unreachable fieldKind %v", p.state.fieldKind))
 	case enterSliceState:
 		ok := p.nextField(sliceKind)
 		if !ok {
@@ -157,17 +154,16 @@ func (p *parser) Next() (parse.Hint, error) {
 		p.state.kind = fieldSliceState
 		return parse.FieldHint, nil
 	case fieldSliceState:
-		fieldValue := p.state.parent.Index(p.field)
+		fieldValue := p.parent.Index(p.field)
 		p.state.kind = enterSliceState
-		s := newState(fieldValue)
-		p.down(s)
-		switch s.fieldKind {
+		p.down(fieldValue)
+		switch p.state.fieldKind {
 		case structKind, sliceKind, mapKind:
 			return parse.EnterHint, nil
 		case valueKind:
 			return parse.ValueHint, nil
 		}
-		panic(fmt.Sprintf("unreachable fieldKind %v", s.fieldKind))
+		panic(fmt.Sprintf("unreachable fieldKind %v", p.state.fieldKind))
 	case enterMapState:
 		ok := p.nextField(mapKind)
 		if !ok {
@@ -181,15 +177,14 @@ func (p *parser) Next() (parse.Hint, error) {
 	case fieldMapState:
 		fieldValue := p.mapIter.Value()
 		p.state.kind = enterMapState
-		s := newState(fieldValue)
-		p.down(s)
-		switch s.fieldKind {
+		p.down(fieldValue)
+		switch p.state.fieldKind {
 		case structKind, sliceKind, mapKind:
 			return parse.EnterHint, nil
 		case valueKind:
 			return parse.ValueHint, nil
 		}
-		panic(fmt.Sprintf("unreachable fieldKind %v", s.fieldKind))
+		panic(fmt.Sprintf("unreachable fieldKind %v", p.state.fieldKind))
 	case valueState:
 		if err := p.up(); err != nil {
 			return parse.UnknownHint, err
@@ -321,11 +316,11 @@ func (p *parser) Skip() error {
 	return nil
 }
 
-func (p *parser) down(state state) {
+func (p *parser) down(val reflect.Value) {
 	// Append the current state to the stack.
 	p.stack = append(p.stack, p.state)
 	// Create a new state.
-	p.state = state
+	p.newState(val)
 }
 
 func (p *parser) up() error {
