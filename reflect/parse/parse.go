@@ -57,6 +57,8 @@ func (p *parser) Init(value reflect.Value) {
 	p.original = value
 	p.alloc = func(size int) []byte { return make([]byte, size) }
 	p.stack = p.stack[:0]
+	p.tokenKind = parse.UnknownKind
+	p.tokenVal = nil
 	return
 }
 
