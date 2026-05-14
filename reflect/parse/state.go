@@ -61,37 +61,29 @@ const valueKind = fieldKind('v')
 func (p *parser) newState(val reflect.Value) {
 	value := deref(val)
 	if value.Kind() == reflect.Struct {
-		p.state = state{
-			kind:      enterStructState,
-			parent:    value,
-			fieldKind: structKind,
-			field:     -1,
-			maxField:  value.NumField(),
-		}
+		p.state.kind = enterStructState
+		p.state.parent = value
+		p.state.fieldKind = structKind
+		p.state.field = -1
+		p.state.maxField = value.NumField()
 	} else if isSlice(value) {
-		p.state = state{
-			kind:      enterSliceState,
-			parent:    value,
-			fieldKind: sliceKind,
-			field:     -1,
-			maxField:  value.Len(),
-		}
+		p.state.kind = enterSliceState
+		p.state.parent = value
+		p.state.fieldKind = sliceKind
+		p.state.field = -1
+		p.state.maxField = value.Len()
 	} else if value.Kind() == reflect.Map {
-		p.state = state{
-			kind:      enterMapState,
-			parent:    value,
-			fieldKind: mapKind,
-			field:     -1,
-			maxField:  value.Len(),
-			mapIter:   value.MapRange(),
-		}
+		p.state.kind = enterMapState
+		p.state.parent = value
+		p.state.fieldKind = mapKind
+		p.state.field = -1
+		p.state.maxField = value.Len()
+		p.state.mapIter = value.MapRange()
 	} else {
-		p.state = state{
-			kind:      valueState,
-			fieldKind: valueKind,
-			value:     val,
-			field:     -1,
-			maxField:  1,
-		}
+		p.state.kind = valueState
+		p.state.fieldKind = valueKind
+		p.state.value = val
+		p.state.field = -1
+		p.state.maxField = 1
 	}
 }
