@@ -62,28 +62,35 @@ func (p *parser) newState(val reflect.Value) {
 	value := deref(val)
 	if value.Kind() == reflect.Struct {
 		p.state.kind = enterStructState
-		p.state.parent = value
 		p.state.fieldKind = structKind
+		p.state.parent = value
+		p.state.value = reflect.Value{}
 		p.state.field = -1
 		p.state.maxField = value.NumField()
+		p.state.mapIter = nil
 	} else if isSlice(value) {
 		p.state.kind = enterSliceState
-		p.state.parent = value
 		p.state.fieldKind = sliceKind
+		p.state.parent = value
+		p.state.value = reflect.Value{}
 		p.state.field = -1
 		p.state.maxField = value.Len()
+		p.state.mapIter = nil
 	} else if value.Kind() == reflect.Map {
 		p.state.kind = enterMapState
-		p.state.parent = value
 		p.state.fieldKind = mapKind
+		p.state.parent = value
+		p.state.value = reflect.Value{}
 		p.state.field = -1
 		p.state.maxField = value.Len()
 		p.state.mapIter = value.MapRange()
 	} else {
 		p.state.kind = valueState
 		p.state.fieldKind = valueKind
+		p.state.parent = reflect.Value{}
 		p.state.value = val
 		p.state.field = -1
 		p.state.maxField = 1
+		p.state.mapIter = nil
 	}
 }
