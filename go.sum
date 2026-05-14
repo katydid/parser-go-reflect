@@ -1,6 +1,4 @@
-github.com/katydid/parser-go v0.8.6 h1:wjrihrJ+6F+3bPiPhptEIkAWy2oxO3BDp8TMtWmZltQ=
-github.com/katydid/parser-go v0.8.6/go.mod h1:e6PzxUlxRtkeyCMHQW7l+xG6/r/3edg14k2KK4l2WL4=
-github.com/katydid/parser-go v0.8.7-0.20260514085400-8a9a4ac5bf10 h1:gRrZ9elMWPILanV391r+gCScMVX+pM/+SeuFOrYDdRc=
-github.com/katydid/parser-go v0.8.7-0.20260514085400-8a9a4ac5bf10/go.mod h1:e6PzxUlxRtkeyCMHQW7l+xG6/r/3edg14k2KK4l2WL4=
-github.com/katydid/parser-go-json v0.5.1 h1:Ihw6Au1Fcmjl6vZ73NbCDWun/6Sz0GTnNK2JHFEeDLA=
-github.com/katydid/parser-go-json v0.5.1/go.mod h1:t+K8lXmZ3KwDt/Qf1mmcmxnR3hjgfjbWR3x/ypHg0s4=
+github.com/katydid/parser-go v0.8.7 h1:mopBpRzJctDA6lkN8VZDdLgXwKcJVPQI2MASAwBr7XA=
+github.com/katydid/parser-go v0.8.7/go.mod h1:e6PzxUlxRtkeyCMHQW7l+xG6/r/3edg14k2KK4l2WL4=
+github.com/katydid/parser-go-json v0.5.3 h1:iaOqAToR3ys7BxkCM7Bm1iSfU84piu76mBzm1V7ntK4=
+github.com/katydid/parser-go-json v0.5.3/go.mod h1:0cxsogSaanno/Y+qYo1j5pmGOlvrKvuB2ukeiLnVpR4=
