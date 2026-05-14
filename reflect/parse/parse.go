@@ -34,7 +34,6 @@ type parser struct {
 
 	// cache tokens
 	tokenKind   parse.Kind
-	tokenVal    []byte
 	tokenString string
 	tokenInt    int64
 	tokenDouble float64
@@ -107,7 +106,6 @@ func (p *parser) nextField(fieldKind fieldKind) bool {
 
 func (p *parser) resetCache() {
 	p.tokenKind = parse.UnknownKind
-	p.tokenVal = nil
 }
 
 func (p *parser) Next() (parse.Hint, error) {
@@ -203,28 +201,23 @@ func (p *parser) Next() (parse.Hint, error) {
 	panic(fmt.Sprintf("unreachable stateKind %v", p.state.kind))
 }
 
-// make sure the pointer is not freed when unsafely cast
-func (p *parser) castFromInt64(i int64) []byte {
-	p.tokenInt = i
+func (p *parser) castFromInt64() []byte {
 	return cast.FromInt64(p.tokenInt, p.alloc)
 }
 
-// make sure the pointer is not freed when unsafely cast
-func (p *parser) castFromFloat64(f float64) []byte {
-	p.tokenDouble = f
+func (p *parser) castFromFloat64() []byte {
 	return cast.FromFloat64(p.tokenDouble, p.alloc)
 }
 
-// make sure the pointer is not freed when unsafely cast
-func (p *parser) castFromString(s string) []byte {
-	p.tokenString = s
+func (p *parser) castFromString() []byte {
 	return cast.FromString(p.tokenString, p.alloc)
 }
 
-func (p *parser) getToken(val reflect.Value) (parse.Kind, []byte, error) {
+func (p *parser) tokenizeValue(val reflect.Value) error {
 	val = deref(val)
 	if val.Kind() == reflect.Invalid {
-		return parse.NullKind, nil, nil
+		p.tokenKind = parse.NullKind
+		return nil
 	}
 	if val.CanInterface() {
 		ival := val.Interface()
@@ -232,63 +225,88 @@ func (p *parser) getToken(val reflect.Value) (parse.Kind, []byte, error) {
 		case json.Number:
 			vint, err := x.Int64()
 			if err == nil {
-				return parse.Int64Kind, p.castFromInt64(vint), nil
+				p.tokenKind = parse.Int64Kind
+				p.tokenInt = vint
+				return nil
 			}
 			vfloat, err := x.Float64()
 			if err == nil {
-				return parse.Float64Kind, p.castFromFloat64(vfloat), nil
+				p.tokenKind = parse.Float64Kind
+				p.tokenDouble = vfloat
+				return nil
 			}
 		}
 	}
 	switch val.Kind() {
 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
-		return parse.Int64Kind, p.castFromInt64(val.Int()), nil
+		p.tokenKind = parse.Int64Kind
+		p.tokenInt = val.Int()
+		return nil
 	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
-		return parse.Float64Kind, p.castFromFloat64(float64(val.Uint())), nil
+		p.tokenKind = parse.Float64Kind
+		p.tokenDouble = float64(val.Uint())
+		return nil
 	case reflect.Float32, reflect.Float64:
-		return parse.Float64Kind, p.castFromFloat64(val.Float()), nil
+		p.tokenKind = parse.Float64Kind
+		p.tokenDouble = val.Float()
+		return nil
 	case reflect.String:
-		return parse.StringKind, p.castFromString(val.String()), nil
+		p.tokenKind = parse.StringKind
+		p.tokenString = val.String()
+		return nil
 	case reflect.Bool:
 		if val.Bool() {
-			return parse.TrueKind, nil, nil
+			p.tokenKind = parse.TrueKind
+			return nil
 		}
-		return parse.FalseKind, nil, nil
+		p.tokenKind = parse.FalseKind
+		return nil
 	}
 	panic(fmt.Sprintf("unreachable val.Kind %v", val.Kind()))
 }
 
 func (p *parser) Token() (parse.Kind, []byte, error) {
+	if err := p.tokenize(); err != nil {
+		return parse.UnknownKind, nil, err
+	}
+	switch p.tokenKind {
+	case parse.StringKind:
+		return parse.StringKind, p.castFromString(), nil
+	case parse.Int64Kind:
+		return parse.Int64Kind, p.castFromInt64(), nil
+	case parse.Float64Kind:
+		return parse.Float64Kind, p.castFromFloat64(), nil
+	}
+	return p.tokenKind, nil, nil
+}
+
+func (p *parser) tokenize() error {
 	if p.tokenKind != parse.UnknownKind {
-		return p.tokenKind, p.tokenVal, nil
+		return nil
 	}
 	switch p.state.kind {
 	case fieldStructState:
 		p.tokenKind = parse.StringKind
 		fieldType := p.parent.Type().Field(p.field)
-		p.tokenVal = p.castFromString(fieldType.Name)
+		p.tokenString = fieldType.Name
 	case fieldSliceState:
 		p.tokenKind = parse.Int64Kind
-		p.tokenVal = p.castFromInt64(int64(p.field))
+		p.tokenInt = int64(p.field)
 	case fieldMapState:
 		keyValue := p.mapIter.Key()
-		tokenKind, tokenVal, err := p.getToken(keyValue)
+		err := p.tokenizeValue(keyValue)
 		if err != nil {
-			return tokenKind, tokenVal, err
+			return err
 		}
-		p.tokenKind = tokenKind
-		p.tokenVal = tokenVal
 	case valueState:
-		tokenKind, tokenVal, err := p.getToken(p.value)
+		err := p.tokenizeValue(p.value)
 		if err != nil {
-			return tokenKind, tokenVal, err
+			return err
 		}
-		p.tokenKind = tokenKind
-		p.tokenVal = tokenVal
 	default:
-		return parse.UnknownKind, nil, nil
+		p.tokenKind = parse.UnknownKind
 	}
-	return p.tokenKind, p.tokenVal, nil
+	return nil
 }
 
 func (p *parser) JSONSchemaType() jsonschema.JSONSchemaType {
