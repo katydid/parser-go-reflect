@@ -33,8 +33,11 @@ type parser struct {
 	stack    []state
 
 	// cache tokens
-	tokenKind parse.Kind
-	tokenVal  []byte
+	tokenKind   parse.Kind
+	tokenVal    []byte
+	tokenString string
+	tokenInt    int64
+	tokenDouble float64
 }
 
 // Parser is a parser for a reflected go structure.
@@ -200,6 +203,24 @@ func (p *parser) Next() (parse.Hint, error) {
 	panic(fmt.Sprintf("unreachable stateKind %v", p.state.kind))
 }
 
+// make sure the pointer is not freed when unsafely cast
+func (p *parser) castFromInt64(i int64) []byte {
+	p.tokenInt = i
+	return cast.FromInt64(p.tokenInt, p.alloc)
+}
+
+// make sure the pointer is not freed when unsafely cast
+func (p *parser) castFromFloat64(f float64) []byte {
+	p.tokenDouble = f
+	return cast.FromFloat64(p.tokenDouble, p.alloc)
+}
+
+// make sure the pointer is not freed when unsafely cast
+func (p *parser) castFromString(s string) []byte {
+	p.tokenString = s
+	return cast.FromString(p.tokenString, p.alloc)
+}
+
 func (p *parser) getToken(val reflect.Value) (parse.Kind, []byte, error) {
 	val = deref(val)
 	if val.Kind() == reflect.Invalid {
@@ -211,23 +232,23 @@ func (p *parser) getToken(val reflect.Value) (parse.Kind, []byte, error) {
 		case json.Number:
 			vint, err := x.Int64()
 			if err == nil {
-				return parse.Int64Kind, cast.FromInt64(vint, p.alloc), nil
+				return parse.Int64Kind, p.castFromInt64(vint), nil
 			}
 			vfloat, err := x.Float64()
 			if err == nil {
-				return parse.Float64Kind, cast.FromFloat64(vfloat, p.alloc), nil
+				return parse.Float64Kind, p.castFromFloat64(vfloat), nil
 			}
 		}
 	}
 	switch val.Kind() {
 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
-		return parse.Int64Kind, cast.FromInt64(val.Int(), p.alloc), nil
+		return parse.Int64Kind, p.castFromInt64(val.Int()), nil
 	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
-		return parse.Float64Kind, cast.FromFloat64(float64(val.Uint()), p.alloc), nil
+		return parse.Float64Kind, p.castFromFloat64(float64(val.Uint())), nil
 	case reflect.Float32, reflect.Float64:
-		return parse.Float64Kind, cast.FromFloat64(val.Float(), p.alloc), nil
+		return parse.Float64Kind, p.castFromFloat64(val.Float()), nil
 	case reflect.String:
-		return parse.StringKind, cast.FromString(val.String(), p.alloc), nil
+		return parse.StringKind, p.castFromString(val.String()), nil
 	case reflect.Bool:
 		if val.Bool() {
 			return parse.TrueKind, nil, nil
@@ -245,10 +266,10 @@ func (p *parser) Token() (parse.Kind, []byte, error) {
 	case fieldStructState:
 		p.tokenKind = parse.StringKind
 		fieldType := p.parent.Type().Field(p.field)
-		p.tokenVal = cast.FromString(fieldType.Name, p.alloc)
+		p.tokenVal = p.castFromString(fieldType.Name)
 	case fieldSliceState:
 		p.tokenKind = parse.Int64Kind
-		p.tokenVal = cast.FromInt64(int64(p.field), p.alloc)
+		p.tokenVal = p.castFromInt64(int64(p.field))
 	case fieldMapState:
 		keyValue := p.mapIter.Key()
 		tokenKind, tokenVal, err := p.getToken(keyValue)
