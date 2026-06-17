@@ -18,7 +18,7 @@ import (
 	"reflect"
 )
 
-type stateKind rune
+type stateKind byte
 
 const startState = stateKind('S')
 
