@@ -30,6 +30,10 @@ jobs:
       run: |
         cd gopath/github.com/katydid/parser-go-reflect
         make test
+    - name: Test PureGo
+      run: |
+        cd gopath/github.com/katydid/parser-go-reflect
+        make test-purego
     - name: Checklicencse
       uses: awalterschulze/checklicense@v1.0.6
       with:

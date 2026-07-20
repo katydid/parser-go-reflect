@@ -20,6 +20,10 @@ test:
 	go clean -testcache
 	go test -v ./...
 
+test-purego:
+	go clean -testcache
+	go test -tags=purego -v ./...
+
 build:
 	go build ./...
 
