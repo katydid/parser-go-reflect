@@ -20,8 +20,8 @@ import (
 	"io"
 	"reflect"
 
-	"github.com/katydid/parser-go-json/json/jsonschema"
 	"github.com/katydid/parser-go/cast"
+	"github.com/katydid/parser-go/jsonschema"
 	"github.com/katydid/parser-go/parse"
 )
 

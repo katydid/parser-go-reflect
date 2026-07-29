@@ -15,9 +15,9 @@
 package jsonschema
 
 import (
-	"github.com/katydid/parser-go-json/json/tag"
 	reflectparser "github.com/katydid/parser-go-reflect/reflect/parse"
 	"github.com/katydid/parser-go/parse"
+	"github.com/katydid/parser-go/tag"
 )
 
 func NewJSONSchemaParser(reflectParser reflectparser.Parser) parse.Parser {
