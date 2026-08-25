@@ -9,14 +9,14 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v4
       with:
-        path: gopath/github.com/katydid/parser-go-reflect
+        path: gopath/katydid.org.za/go/parser-go-reflect
     - name: Setup Go
       uses: actions/setup-go@v3
       with:
         go-version: 1.24
     - name: Fetch dependencies
       run: |
-        cd gopath/github.com/katydid/parser-go-reflect
+        cd gopath/katydid.org.za/go/parser-go-reflect
         go mod download -x
     - name: env
       run: env && go env && pwd
@@ -24,22 +24,22 @@ jobs:
       run: tree
     - name: Build
       run: |
-        cd gopath/github.com/katydid/parser-go-reflect
+        cd gopath/katydid.org.za/go/parser-go-reflect
         make build
     - name: Test
       run: |
-        cd gopath/github.com/katydid/parser-go-reflect
+        cd gopath/katydid.org.za/go/parser-go-reflect
         make test
     - name: Test PureGo
       run: |
-        cd gopath/github.com/katydid/parser-go-reflect
+        cd gopath/katydid.org.za/go/parser-go-reflect
         make test-purego
     - name: Checklicencse
       uses: awalterschulze/checklicense@v1.0.6
       with:
-        path: gopath/github.com/katydid/parser-go-reflect
+        path: gopath/katydid.org.za/go/parser-go-reflect
         ignores: doc.go .svg .txt
     - name: Diff
       run: |
-        cd gopath/github.com/katydid/parser-go-reflect
+        cd gopath/katydid.org.za/go/parser-go-reflect
         make diff

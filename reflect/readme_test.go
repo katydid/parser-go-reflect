@@ -19,9 +19,9 @@ import (
 	"reflect"
 	"testing"
 
-	reflectparser "github.com/katydid/parser-go-reflect/reflect"
-	"github.com/katydid/parser-go/cast"
-	"github.com/katydid/parser-go/parse"
+	reflectparser "katydid.org.za/go/parser-go-reflect/reflect"
+	"katydid.org.za/go/parser-go/cast"
+	"katydid.org.za/go/parser-go/parse"
 )
 
 type MyStruct struct {

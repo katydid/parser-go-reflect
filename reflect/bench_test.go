@@ -21,7 +21,7 @@ import (
 	"testing"
 	"time"
 
-	goparse "github.com/katydid/parser-go/parse"
+	goparse "katydid.org.za/go/parser-go/parse"
 )
 
 type TestStruct struct {

@@ -2,12 +2,12 @@
 
 Reflection based parser for Go.
 
-We can dynamically walk over reflecting Go `structs` using the [Parser interface](https://github.com/katydid/parser-go):
+We can dynamically walk over reflecting Go `structs` using the [Parser interface](https://git.katydid.org.za/parser-go):
 
 ```go
 import (
     "reflect"
-    reflectparser "github.com/katydid/parser-go-reflect/reflect"
+    reflectparser "katydid.org.za/go/parser-go-reflect/reflect"
 )
 
 func main() {
@@ -27,8 +27,8 @@ We can then use the parser to decode only `MyField` and skip over other fields a
 ```go
 import (
 	"errors"
-	"github.com/katydid/parser-go/cast"
-	"github.com/katydid/parser-go/parse"
+	"katydid.org.za/go/parser-go/cast"
+	"katydid.org.za/go/parser-go/parse"
 )
 
 func GetMyField(p parse.Parser) (string, error) {

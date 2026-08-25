@@ -22,9 +22,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/katydid/parser-go/cast"
-	"github.com/katydid/parser-go/expect"
-	"github.com/katydid/parser-go/parse"
+	"katydid.org.za/go/parser-go/cast"
+	"katydid.org.za/go/parser-go/expect"
+	"katydid.org.za/go/parser-go/parse"
 )
 
 type TestStruct struct {

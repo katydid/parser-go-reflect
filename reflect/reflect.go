@@ -18,9 +18,9 @@ package reflect
 import (
 	"reflect"
 
-	"github.com/katydid/parser-go-reflect/reflect/parse"
-	goparse "github.com/katydid/parser-go/parse"
-	"github.com/katydid/parser-go/tag"
+	"katydid.org.za/go/parser-go-reflect/reflect/parse"
+	goparse "katydid.org.za/go/parser-go/parse"
+	"katydid.org.za/go/parser-go/tag"
 )
 
 // Parser is a parser for a reflected go structure.

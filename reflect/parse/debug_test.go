@@ -18,8 +18,8 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/katydid/parser-go/compat/downgrade"
-	"github.com/katydid/parser-go/parser/debug"
+	"katydid.org.za/go/parser-go/compat/downgrade"
+	"katydid.org.za/go/parser-go/parser/debug"
 )
 
 func TestDebug(t *testing.T) {
