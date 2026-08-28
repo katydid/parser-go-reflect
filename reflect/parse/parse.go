@@ -18,6 +18,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"math"
 	"reflect"
 
 	"katydid.org.za/go/parser-go/cast"
@@ -33,10 +34,10 @@ type parser struct {
 	stack    []state
 
 	// cache tokens
-	tokenKind   parse.Kind
-	tokenString string
-	tokenInt    int64
-	tokenDouble float64
+	tokenKind       parse.Kind
+	tokenString     string
+	tokenInt        int64
+	tokenDoubleBits uint64
 }
 
 // Parser is a parser for a reflected go structure.
@@ -202,15 +203,15 @@ func (p *parser) Next() (parse.Hint, error) {
 }
 
 func (p *parser) castFromInt64() []byte {
-	return cast.FromInt64(p.tokenInt, p.alloc)
+	return cast.FromInt64Ptr(&p.tokenInt, p.alloc)
 }
 
 func (p *parser) castFromFloat64() []byte {
-	return cast.FromFloat64(p.tokenDouble, p.alloc)
+	return cast.FromFloat64BitsPtr(&p.tokenDoubleBits, p.alloc)
 }
 
 func (p *parser) castFromString() []byte {
-	return cast.FromString(p.tokenString, p.alloc)
+	return cast.FromStringPtr(&p.tokenString, p.alloc)
 }
 
 func (p *parser) tokenizeValue(val reflect.Value) error {
@@ -232,7 +233,7 @@ func (p *parser) tokenizeValue(val reflect.Value) error {
 			vfloat, err := x.Float64()
 			if err == nil {
 				p.tokenKind = parse.Float64Kind
-				p.tokenDouble = vfloat
+				p.tokenDoubleBits = math.Float64bits(vfloat)
 				return nil
 			}
 		}
@@ -244,11 +245,11 @@ func (p *parser) tokenizeValue(val reflect.Value) error {
 		return nil
 	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
 		p.tokenKind = parse.Float64Kind
-		p.tokenDouble = float64(val.Uint())
+		p.tokenDoubleBits = math.Float64bits(float64(val.Uint()))
 		return nil
 	case reflect.Float32, reflect.Float64:
 		p.tokenKind = parse.Float64Kind
-		p.tokenDouble = val.Float()
+		p.tokenDoubleBits = math.Float64bits(val.Float())
 		return nil
 	case reflect.String:
 		p.tokenKind = parse.StringKind

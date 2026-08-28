@@ -22,7 +22,7 @@ import (
 	"testing"
 	"time"
 
-	"katydid.org.za/go/parser-go/cast"
+	"katydid.org.za/go/parser-go/cp"
 	"katydid.org.za/go/parser-go/expect"
 	"katydid.org.za/go/parser-go/parse"
 )
@@ -441,7 +441,7 @@ func TestSingleValue(t *testing.T) {
 	if kind != parse.Int64Kind {
 		t.Fatalf("expected Int64Kind but got %v", kind)
 	}
-	got := cast.ToInt64(val)
+	got := cp.ToInt64(val)
 	if got != want {
 		t.Fatalf("got %v want %v", got, want)
 	}
@@ -486,7 +486,7 @@ func TestLargeNumberAlone(t *testing.T) {
 	if kind != parse.Int64Kind {
 		t.Fatalf("expected Int64Kind but got %v", kind)
 	}
-	got := cast.ToInt64(val)
+	got := cp.ToInt64(val)
 	if got != want {
 		t.Fatalf("got %v want %v", got, want)
 	}
@@ -527,7 +527,7 @@ func TestLargeNumberWithJSONUnmarshalling(t *testing.T) {
 	if kind != parse.Int64Kind {
 		t.Fatalf("expected Int64Kind but got %v", kind)
 	}
-	got := cast.ToInt64(val)
+	got := cp.ToInt64(val)
 	if got != want {
 		t.Fatalf("got %v want %v", got, want)
 	}

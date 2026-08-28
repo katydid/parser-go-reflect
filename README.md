@@ -27,7 +27,7 @@ We can then use the parser to decode only `MyField` and skip over other fields a
 ```go
 import (
 	"errors"
-	"katydid.org.za/go/parser-go/cast"
+	"katydid.org.za/go/parser-go/cp"
 	"katydid.org.za/go/parser-go/parse"
 )
 
@@ -54,7 +54,7 @@ func GetMyField(p parse.Parser) (string, error) {
 		if kind != parse.StringKind {
 			return "", errors.New("expected string")
 		}
-		if cast.ToString(fieldName) == "MyField" {
+		if cp.ToString(fieldName) == "MyField" {
 			hint, err = p.Next()
 			if err != nil {
 				return "", err
@@ -69,7 +69,7 @@ func GetMyField(p parse.Parser) (string, error) {
 			if kind != parse.StringKind {
 				return "", errors.New("expected string")
 			}
-			return cast.ToString(val), nil
+			return cp.ToString(val), nil
 		} else {
 			p.Skip()
 		}
