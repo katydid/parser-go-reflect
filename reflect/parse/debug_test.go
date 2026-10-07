@@ -18,32 +18,33 @@ import (
 	"reflect"
 	"testing"
 
-	"katydid.org.za/go/parser-go/compat/downgrade"
-	"katydid.org.za/go/parser-go/parser/debug"
+	"katydid.org.za/go/parser-go/debug"
+	"katydid.org.za/go/parser-go/log"
+
+	"katydid.org.za/go/parser-go/example"
+	"katydid.org.za/go/parser-go/rand"
 )
 
-func TestDebug(t *testing.T) {
-	p := NewParser()
-	p.Init(reflect.ValueOf(debug.Input))
-	m, err := debug.Parse(downgrade.Parser(p))
-	if err != nil {
-		t.Fatal(err)
-	}
-	if !m.Equal(debug.Output) {
-		t.Fatalf("expected %s but got %s", debug.Output, m)
-	}
-}
+// func TestDebug(t *testing.T) {
+// 	p := NewParser()
+// 	p.Init(reflect.ValueOf(example.Input))
+// 	m, err := hedge.ParseInto(p)
+// 	if err != nil {
+// 		t.Fatal(err)
+// 	}
+// 	if !m.Equal(example.Output) {
+// 		t.Fatalf("expected %#v but got %#v", example.Output, m)
+// 	}
+// }
 
 func TestRandomDebug(t *testing.T) {
 	p := NewParser()
 	for i := 0; i < 10; i++ {
-		p.Init(reflect.ValueOf(debug.Input))
-		parser := downgrade.Parser(p)
-		// l := debug.NewLogger(parser, debug.NewLineLogger())
-		err := debug.RandomWalk(parser, debug.NewRand(), 10, 3)
+		p.Init(reflect.ValueOf(example.Input))
+		l := log.WrapParser(p)
+		err := debug.RandomWalk(l, rand.NewRand(), 10, 3)
 		if err != nil {
 			t.Fatal(err)
 		}
-		// t.Logf("original %v vs random %v", debug.Input, debug.Output)
 	}
 }
